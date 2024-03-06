@@ -10,17 +10,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-
 /*
      Main GUI part!
 	 Here it comes together!
 
 
 */
-
-
-
-
 
 const (
 	SCREEN_WIDTH  = 800
@@ -69,12 +64,12 @@ func (g *MyGame) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHei
 
 	//fmt.Println("Game.Layout... ",outsideWidth, outsideHeight,screenWidth, screenHeight)
 	//return outsideWidth /2, outsideHeight/2
-	return outsideWidth, outsideHeight
+	return outsideWidth / 2, outsideHeight / 2
 }
 
 func (g *MyGame) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{0x35, 0x15, 0xf5, 0xff})
- 
+
 	//lerper := &Player{}
 	//NewLerper().DrawIT(g, screen)
 	NewLerper().DrawSimple(g, screen)

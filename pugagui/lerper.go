@@ -1,14 +1,17 @@
 package pugagui
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/colorm"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"image"
 	"image/color"
 	"math"
-
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Player struct {
@@ -25,9 +28,17 @@ var (
 	// whiteSubImage is an internal sub image of whiteImage.
 	// Use whiteSubImage at DrawTriangles instead of whiteImage in order to avoid bleeding edges.
 	whiteSubImage = whiteImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
+
+	uiFaceSource *text.GoTextFaceSource
 )
 
 func init() {
+	s, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	if err != nil {
+		panic(err)
+	}
+	uiFaceSource = s
+
 	whiteImage.Fill(color.White)
 }
 
@@ -36,63 +47,80 @@ func NewLerper() *Player {
 	return asdf
 }
 
+func DrawDot(g *MyGame, screen *ebiten.Image, point POS, label string) {
+
+	vector.DrawFilledCircle(screen, point.x, point.y, 8.0, color.White, g.aa)
+	ebitenutil.DebugPrintAt(screen, label, int(point.x)-4, int(point.y)+4)
+
+}
+
 func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
 
 	//fmt.Println("generatePlayerImage...")
 
+	screen.Fill(color.Black)
 	A := POS{200, 150}
 	B := POS{150, 250}
 	C := POS{50, 100}
 	D := POS{250, 200}
 
+	DrawDot(g, screen, A, "A")
+
 	op := &vector.StrokeOptions{}
 	op.Width = 2
 	op.LineJoin = vector.LineJoinMiter
-	
+
 	var path vector.Path
 
 	path.MoveTo(A.x, A.y)
 	path.LineTo(B.x, B.y)
 	path.MoveTo(C.x, C.y)
 	path.LineTo(D.x, D.y)
-	path.QuadTo(150, 57.5, 100, 45)
- 
 
-	vector.DrawFilledCircle( screen,A.x,A.y,8.0,color.White,g.aa)
-	vector.DrawFilledCircle( screen,B.x,B.y,8.0,color.White,g.aa)
-	vector.DrawFilledCircle( screen,C.x,C.y,8.0,color.White,g.aa)
-	vector.DrawFilledCircle( screen,D.x,D.y,8.0,color.White,g.aa)
+	vector.DrawFilledCircle(screen, A.x, A.y, 8.0, color.White, g.aa)
+	vector.DrawFilledCircle(screen, B.x, B.y, 8.0, color.White, g.aa)
+	vector.DrawFilledCircle(screen, C.x, C.y, 8.0, color.White, g.aa)
+	vector.DrawFilledCircle(screen, D.x, D.y, 8.0, color.White, g.aa)
 
+	ebitenutil.DebugPrintAt(screen, "A", int(A.x), int(A.y))
+	ebitenutil.DebugPrintAt(screen, "B", int(B.x), int(B.y))
+	ebitenutil.DebugPrintAt(screen, "C", int(C.x), int(C.y))
+	ebitenutil.DebugPrintAt(screen, "D", int(D.x), int(D.y))
 
- 
-	ebitenutil.DebugPrintAt (screen, "A", int (A.x), int(A.y))
-	ebitenutil.DebugPrintAt (screen, "B", int (B.x), int(B.y))
-	ebitenutil.DebugPrintAt (screen, "C", int (C.x), int(C.y))
-	ebitenutil.DebugPrintAt (screen, "D", int (D.x), int(D.y))
-	
-
-	offset := float32(12.0)
-	path.MoveTo(0+offset, 50-offset)
-	path.LineTo(25, 0+offset)
-	path.LineTo(50-offset, 50-offset)
-	path.LineTo(0+offset, 50-offset)
 	path.Close()
 
 	vs, is := path.AppendVerticesAndIndicesForStroke(nil, nil, op)
 
-	genPlayerImage := ebiten.NewImage(150, 150)
-	genPlayerImage.Fill(color.Transparent)
-
-	genPlayerImage.Fill(color.Black)
 	triOp := &ebiten.DrawTrianglesOptions{}
 	triOp.AntiAlias = true
+	//clr := color.RGBA{255, 0, 0, 255}
 
+	var cm colorm.ColorM
+	cm.Scale(0.2, 0.5, 0.3, 1.0)
+
+	colorm.DrawTriangles(screen, vs, is, whiteSubImage, cm, &colorm.DrawTrianglesOptions{
+		AntiAlias: g.aa,
+	})
+	// Draw colored text
+
+	ebitenutil.DebugPrint(screen, "Press ESC to quit")
 	//var redImage = ebiten.NewImage(3, 3)
 	//var redSubImage = redImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
 
-	screen.DrawTriangles(vs, is, whiteSubImage, &ebiten.DrawTrianglesOptions{
-		AntiAlias: g.aa,
-	})
+	//screen.DrawTriangles(vs, is, whiteSubImage, &ebiten.DrawTrianglesOptions{
+	//	AntiAlias: g.aa,
+	//})
+
+	op2 := &text.DrawOptions{}
+	op2.GeoM.Translate(299, 20)
+	op2.ColorScale.ScaleWithColor(color.White)
+	op2.LineSpacing = 2
+	op2.PrimaryAlign = text.AlignCenter
+	op2.SecondaryAlign = text.AlignCenter
+	text.Draw(screen, "b.Text", &text.GoTextFace{
+		Source: uiFaceSource,
+		Size:   12,
+	}, op2)
 
 }
 
