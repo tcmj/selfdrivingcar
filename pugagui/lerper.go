@@ -3,15 +3,17 @@ package pugagui
 import (
 	"bytes"
 	"fmt"
+	"image"
+	"image/color"
+	"math"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/colorm"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"image"
-	"image/color"
-	"math"
+	"github.com/tcmj/selfdrivingcar/pugutils"
 )
 
 type Player struct {
@@ -29,6 +31,8 @@ var (
 	// Use whiteSubImage at DrawTriangles instead of whiteImage in order to avoid bleeding edges.
 	whiteSubImage = whiteImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
 
+	strokeImage = ebiten.NewImage(4, 4)
+
 	uiFaceSource *text.GoTextFaceSource
 )
 
@@ -40,6 +44,8 @@ func init() {
 	uiFaceSource = s
 
 	whiteImage.Fill(color.White)
+
+	strokeImage.Fill(color.RGBA{5, 24, 54, 255})
 }
 
 func NewLerper() *Player {
@@ -47,80 +53,107 @@ func NewLerper() *Player {
 	return asdf
 }
 
-func DrawDot(g *MyGame, screen *ebiten.Image, point POS, label string) {
-
+func DrawDot(g *MyGame, screen *ebiten.Image, point POS, label string, isRed ...bool) {
 	vector.DrawFilledCircle(screen, point.x, point.y, 8.0, color.White, g.aa)
-	ebitenutil.DebugPrintAt(screen, label, int(point.x)-4, int(point.y)+4)
+	vector.StrokeCircle(screen, point.x, point.y, 8.0, 1.0, color.Black, g.aa)
+	dO := &text.DrawOptions{}
+	dO.GeoM.Translate(float64(point.x), float64(point.y))
+	if len(isRed) > 0 && isRed[0] {
+
+		dO.ColorScale.ScaleWithColor(color.RGBA{225, 24, 54, 255})
+	} else {
+
+		dO.ColorScale.ScaleWithColor(color.Black)
+	}
+	dO.LineSpacing = 1
+	dO.PrimaryAlign = text.AlignCenter
+	dO.SecondaryAlign = text.AlignCenter
+	text.Draw(screen, label, &text.GoTextFace{
+		Source: uiFaceSource,
+		Size:   12,
+	}, dO)
 
 }
 
-func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
-
-	//fmt.Println("generatePlayerImage...")
-
-	screen.Fill(color.Black)
-	A := POS{200, 150}
-	B := POS{150, 250}
-	C := POS{50, 100}
-	D := POS{250, 200}
-
-	DrawDot(g, screen, A, "A")
-
+func DrawLine(g *MyGame, screen *ebiten.Image, pA POS, pB POS) {
 	op := &vector.StrokeOptions{}
 	op.Width = 2
 	op.LineJoin = vector.LineJoinMiter
 
 	var path vector.Path
 
-	path.MoveTo(A.x, A.y)
-	path.LineTo(B.x, B.y)
-	path.MoveTo(C.x, C.y)
-	path.LineTo(D.x, D.y)
-
-	vector.DrawFilledCircle(screen, A.x, A.y, 8.0, color.White, g.aa)
-	vector.DrawFilledCircle(screen, B.x, B.y, 8.0, color.White, g.aa)
-	vector.DrawFilledCircle(screen, C.x, C.y, 8.0, color.White, g.aa)
-	vector.DrawFilledCircle(screen, D.x, D.y, 8.0, color.White, g.aa)
-
-	ebitenutil.DebugPrintAt(screen, "A", int(A.x), int(A.y))
-	ebitenutil.DebugPrintAt(screen, "B", int(B.x), int(B.y))
-	ebitenutil.DebugPrintAt(screen, "C", int(C.x), int(C.y))
-	ebitenutil.DebugPrintAt(screen, "D", int(D.x), int(D.y))
+	path.MoveTo(pA.x, pA.y)
+	path.LineTo(pB.x, pB.y)
 
 	path.Close()
-
 	vs, is := path.AppendVerticesAndIndicesForStroke(nil, nil, op)
 
-	triOp := &ebiten.DrawTrianglesOptions{}
-	triOp.AntiAlias = true
-	//clr := color.RGBA{255, 0, 0, 255}
+	if g.strokeLineFlag {
+		op.Width = 1
+		vs, is := path.AppendVerticesAndIndicesForStroke(g.vertices[:0], g.indices[:0], op)
+		for i := range vs {
+			vs[i].SrcX = 1
+			vs[i].SrcY = 1
+			vs[i].ColorR = 1
+			vs[i].ColorG = 0
+			vs[i].ColorB = 0
+			vs[i].ColorA = 1
+		}
+		screen.DrawTriangles(vs, is, whiteSubImage, &ebiten.DrawTrianglesOptions{
+			AntiAlias: g.aa,
+		})
+	} else {
 
-	var cm colorm.ColorM
-	cm.Scale(0.2, 0.5, 0.3, 1.0)
+		var cm colorm.ColorM
+		//cm.Translate(255,2,2,255)
+		//cm.Scale(0.2, 0.5, 0.3, 1.0)
 
-	colorm.DrawTriangles(screen, vs, is, whiteSubImage, cm, &colorm.DrawTrianglesOptions{
-		AntiAlias: g.aa,
-	})
-	// Draw colored text
+		colorm.DrawTriangles(screen, vs, is, strokeImage, cm, &colorm.DrawTrianglesOptions{
+			AntiAlias: g.aa,
+		})
 
-	ebitenutil.DebugPrint(screen, "Press ESC to quit")
-	//var redImage = ebiten.NewImage(3, 3)
-	//var redSubImage = redImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
+	}
 
-	//screen.DrawTriangles(vs, is, whiteSubImage, &ebiten.DrawTrianglesOptions{
-	//	AntiAlias: g.aa,
-	//})
+}
+func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
 
-	op2 := &text.DrawOptions{}
-	op2.GeoM.Translate(299, 20)
-	op2.ColorScale.ScaleWithColor(color.White)
-	op2.LineSpacing = 2
-	op2.PrimaryAlign = text.AlignCenter
-	op2.SecondaryAlign = text.AlignCenter
-	text.Draw(screen, "b.Text", &text.GoTextFace{
-		Source: uiFaceSource,
-		Size:   12,
-	}, op2)
+	//fmt.Println("generatePlayerImage...")
+
+	screen.Fill(color.RGBA{113, 143, 191, 255})
+
+	A := POS{200, 150}
+	B := POS{150, 250}
+	C := POS{50, 100}
+	D := POS{250, 200}
+
+	DrawLine(g, screen, A, B)
+	DrawLine(g, screen, C, D)
+
+	//DrawDot(g, screen, POS{100, 150}, "A")
+	DrawDot(g, screen, A, "A")
+	DrawDot(g, screen, B, "B")
+	DrawDot(g, screen, C, "C")
+	DrawDot(g, screen, D, "D")
+
+	var t float32 = g.count
+
+	M := POS{
+		pugutils.Lerp32(A.x, B.x, t),
+		pugutils.Lerp32(A.y, B.y, t),
+	}
+	DrawDot(g, screen, M, "M", t < 0 || t > 1)
+	N := POS{
+		pugutils.Lerp32(C.x, D.x, t),
+		pugutils.Lerp32(C.y, D.y, t),
+	}
+	DrawDot(g, screen, N, "N", t < 0 || t > 1)
+
+	msg := fmt.Sprintf(`FPS: %0.2f, TPS: %0.2f
+Press A to switch anti-aliasing : %t.
+Press C to switch color to draw the strokes : %t
+Press Up/Down to adjust Speed : %f
+Lerp - Percentage: %0.2f`, ebiten.ActualFPS(), ebiten.ActualTPS(), g.aa, g.strokeLineFlag, g.addendum, t)
+	ebitenutil.DebugPrint(screen, msg)
 
 }
 
@@ -198,7 +231,7 @@ func (p *Player) drawLine(g *MyGame, screen *ebiten.Image, region image.Rectangl
 	})
 
 	// Draw the center line in red.
-	if g.showCenter {
+	if g.strokeLineFlag {
 		op.Width = 1
 		vs, is := path.AppendVerticesAndIndicesForStroke(g.vertices[:0], g.indices[:0], op)
 		for i := range vs {

@@ -26,13 +26,14 @@ const (
 var redImage = ebiten.NewImage(3, 3)
 
 type MyGame struct {
-	count int
+	count float32 
+	addendum float32 
 
 	vertices []ebiten.Vertex
 	indices  []uint16
 
-	aa         bool
-	showCenter bool
+	aa             bool
+	strokeLineFlag bool
 }
 
 func init() {
@@ -42,19 +43,34 @@ func init() {
 }
 
 func NewGame(amount int, colorful bool) *MyGame {
-	g := &MyGame{}
+	g := &MyGame{
+
+count: -1.1,
+addendum: 0.001,
+		 
+	}
 	return g
 }
 
 func (g *MyGame) Update() error {
-	g.count++
-
-	g.count++
+	g.count+=g.addendum
+	if g.count > 2.0{
+		fmt.Println("resetting", g.count)
+		g.count = -1.0
+	}
+	 
 	if inpututil.IsKeyJustPressed(ebiten.KeyA) {
 		g.aa = !g.aa
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyC) {
-		g.showCenter = !g.showCenter
+		g.strokeLineFlag = !g.strokeLineFlag
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+		g.addendum  += 0.001
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+		
+		g.addendum  -= 0.001
 	}
 	return nil
 
