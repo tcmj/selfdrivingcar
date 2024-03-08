@@ -2,7 +2,10 @@ module github.com/tcmj/selfdrivingcar
 
 go 1.22.0
 
-require github.com/hajimehoshi/ebiten/v2 v2.7.0-alpha.9
+require (
+	github.com/hajimehoshi/ebiten/v2 v2.7.0-alpha.9
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
+)
 
 require (
 	github.com/ebitengine/gomobile v0.0.0-20240223151600-9f1d75a9f41c // indirect

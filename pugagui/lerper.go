@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/colorm"
@@ -13,15 +12,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"github.com/tcmj/selfdrivingcar/pugutils"
+	"github.com/tcmj/selfdrivingcar/pug"
 )
 
 type Player struct {
 	PosX, PosY float64
-}
-
-type POS struct {
-	x, y float32
 }
 
 var (
@@ -53,11 +48,11 @@ func NewLerper() *Player {
 	return asdf
 }
 
-func DrawDot(g *MyGame, screen *ebiten.Image, point POS, label string, isRed ...bool) {
-	vector.DrawFilledCircle(screen, point.x, point.y, 8.0, color.White, g.aa)
-	vector.StrokeCircle(screen, point.x, point.y, 8.0, 1.0, color.Black, g.aa)
+func DrawDot(g *MyGame, screen *ebiten.Image, point pug.POS, label string, isRed ...bool) {
+	vector.DrawFilledCircle(screen, float32(point.X), float32(point.Y), 8.0, color.White, g.aa)
+	vector.StrokeCircle(screen, float32(point.X), float32(point.Y), 8.0, 1.0, color.Black, g.aa)
 	dO := &text.DrawOptions{}
-	dO.GeoM.Translate(float64(point.x), float64(point.y))
+	dO.GeoM.Translate(float64(point.X), float64(point.Y))
 	if len(isRed) > 0 && isRed[0] {
 
 		dO.ColorScale.ScaleWithColor(color.RGBA{225, 24, 54, 255})
@@ -75,15 +70,16 @@ func DrawDot(g *MyGame, screen *ebiten.Image, point POS, label string, isRed ...
 
 }
 
-func DrawLine(g *MyGame, screen *ebiten.Image, pA POS, pB POS) {
+func DrawLine(g *MyGame, screen *ebiten.Image, pA pug.POS, pB pug.POS) {
 	op := &vector.StrokeOptions{}
 	op.Width = 2
 	op.LineJoin = vector.LineJoinMiter
 
 	var path vector.Path
 
-	path.MoveTo(pA.x, pA.y)
-	path.LineTo(pB.x, pB.y)
+	path.MoveTo(float32(pA.X), float32(pA.Y))
+	path.LineTo(float32(pB.X), float32(pB.Y))
+	 
 
 	path.Close()
 	vs, is := path.AppendVerticesAndIndicesForStroke(nil, nil, op)
@@ -121,10 +117,10 @@ func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
 
 	screen.Fill(color.RGBA{113, 143, 191, 255})
 
-	A := POS{200, 150}
-	B := POS{150, 250}
-	C := POS{50, 100}
-	D := POS{250, 200}
+	A := pug.POS{X: 200, Y: 150}
+	B := pug.POS{X: 150, Y: 210}
+	C := pug.POS{X: 50, Y: 100}
+	D := pug.POS{X: 250, Y: 200}
 
 	DrawLine(g, screen, A, B)
 	DrawLine(g, screen, C, D)
@@ -135,16 +131,16 @@ func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
 	DrawDot(g, screen, C, "C")
 	DrawDot(g, screen, D, "D")
 
-	var t float32 = g.count
+	var t float64 = g.count
 
-	M := POS{
-		pugutils.Lerp32(A.x, B.x, t),
-		pugutils.Lerp32(A.y, B.y, t),
+	M := pug.POS{
+		X: pug.Lerp(A.X, B.X, t),
+		Y: pug.Lerp(A.Y, B.Y, t),
 	}
 	DrawDot(g, screen, M, "M", t < 0 || t > 1)
-	N := POS{
-		pugutils.Lerp32(C.x, D.x, t),
-		pugutils.Lerp32(C.y, D.y, t),
+	N := pug.POS{
+		X: pug.Lerp(C.X, D.X, t),
+		Y: pug.Lerp(C.Y, D.Y, t),
 	}
 	DrawDot(g, screen, N, "N", t < 0 || t > 1)
 
@@ -154,96 +150,7 @@ Press C to switch color to draw the strokes : %t
 Press Up/Down to adjust Speed : %f
 Lerp - Percentage: %0.2f`, ebiten.ActualFPS(), ebiten.ActualTPS(), g.aa, g.strokeLineFlag, g.addendum, t)
 	ebitenutil.DebugPrint(screen, msg)
-
-}
-
-func (p *Player) DrawIT(g *MyGame, screen *ebiten.Image) {
-	target := screen
-
-	joins := []vector.LineJoin{
-		vector.LineJoinMiter,
-		vector.LineJoinMiter,
-		vector.LineJoinBevel,
-		vector.LineJoinRound,
-	}
-	caps := []vector.LineCap{
-		vector.LineCapButt,
-		vector.LineCapRound,
-		vector.LineCapSquare,
-	}
-
-	ow, oh := target.Bounds().Dx(), target.Bounds().Dy()
-	size := min(ow/(len(joins)+1), oh/(len(caps)+1))
-	offsetX, offsetY := (ow-size*len(joins))/2, (oh-size*len(caps))/2
-
-	// Render the lines on the target.
-	for j, cap := range caps {
-		for i, join := range joins {
-			r := image.Rect(i*size+offsetX, j*size+offsetY, (i+1)*size+offsetX, (j+1)*size+offsetY)
-			miterLimit := float32(5)
-			if i == 1 {
-				miterLimit = 10
-			}
-			p.drawLine(g, target, r, cap, join, miterLimit)
-		}
-	}
-
-	msg := fmt.Sprintf(`FPS: %0.2f, TPS: %0.2f
-Press A to switch anti-aliasing.
-Press C to switch to draw the center lines.`, ebiten.ActualFPS(), ebiten.ActualTPS())
-	ebitenutil.DebugPrint(screen, msg)
-}
-
-func (p *Player) drawLine(g *MyGame, screen *ebiten.Image, region image.Rectangle, cap vector.LineCap, join vector.LineJoin, miterLimit float32) {
-	c0x := float64(region.Min.X + region.Dx()/4)
-	c0y := float64(region.Min.Y + region.Dy()/4)
-	c1x := float64(region.Max.X - region.Dx()/4)
-	c1y := float64(region.Max.Y - region.Dy()/4)
-	r := float64(min(region.Dx(), region.Dy()) / 4)
-	a0 := 2 * math.Pi * float64(g.count) / (16 * ebiten.DefaultTPS)
-	a1 := 2 * math.Pi * float64(g.count) / (9 * ebiten.DefaultTPS)
-
-	var path vector.Path
-	sin0, cos0 := math.Sincos(a0)
-	sin1, cos1 := math.Sincos(a1)
-	path.MoveTo(float32(r*cos0+c0x), float32(r*sin0+c0y))
-	path.LineTo(float32(-r*cos0+c0x), float32(-r*sin0+c0y))
-	path.LineTo(float32(r*cos1+c1x), float32(r*sin1+c1y))
-	path.LineTo(float32(-r*cos1+c1x), float32(-r*sin1+c1y))
-
-	// Draw the main line in white.
-	op := &vector.StrokeOptions{}
-	op.LineCap = cap
-	op.LineJoin = join
-	op.MiterLimit = miterLimit
-	op.Width = float32(r / 2)
-	vs, is := path.AppendVerticesAndIndicesForStroke(g.vertices[:0], g.indices[:0], op)
-	for i := range vs {
-		vs[i].SrcX = 1
-		vs[i].SrcY = 1
-		vs[i].ColorR = 1
-		vs[i].ColorG = 1
-		vs[i].ColorB = 1
-		vs[i].ColorA = 1
-	}
-	screen.DrawTriangles(vs, is, whiteSubImage, &ebiten.DrawTrianglesOptions{
-		AntiAlias: g.aa,
-	})
-
-	// Draw the center line in red.
-	if g.strokeLineFlag {
-		op.Width = 1
-		vs, is := path.AppendVerticesAndIndicesForStroke(g.vertices[:0], g.indices[:0], op)
-		for i := range vs {
-			vs[i].SrcX = 1
-			vs[i].SrcY = 1
-			vs[i].ColorR = 1
-			vs[i].ColorG = 0
-			vs[i].ColorB = 0
-			vs[i].ColorA = 1
-		}
-		screen.DrawTriangles(vs, is, whiteSubImage, &ebiten.DrawTrianglesOptions{
-			AntiAlias: g.aa,
-		})
-	}
+	intersec, offset := pug.GetIntersection(A,B,C,D)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%v (offset=%.2f)",intersec,offset), 111,111)
+	DrawDot(g, screen, *intersec, "I")
 }

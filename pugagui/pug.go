@@ -26,8 +26,8 @@ const (
 var redImage = ebiten.NewImage(3, 3)
 
 type MyGame struct {
-	count float32 
-	addendum float32 
+	count float64 
+	addendum float64 
 
 	vertices []ebiten.Vertex
 	indices  []uint16
