@@ -14,7 +14,7 @@ func main() {
 
 	ebiten.SetWindowIcon(GetIcon())
 	ebiten.SetWindowTitle("Pug!")
-
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	foo := func(x int) int {
 		return x * x
 	}

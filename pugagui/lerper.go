@@ -79,7 +79,6 @@ func DrawLine(g *MyGame, screen *ebiten.Image, pA pug.POS, pB pug.POS) {
 
 	path.MoveTo(float32(pA.X), float32(pA.Y))
 	path.LineTo(float32(pB.X), float32(pB.Y))
-	 
 
 	path.Close()
 	vs, is := path.AppendVerticesAndIndicesForStroke(nil, nil, op)
@@ -111,16 +110,16 @@ func DrawLine(g *MyGame, screen *ebiten.Image, pA pug.POS, pB pug.POS) {
 	}
 
 }
-func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
+func  DrawSimple(g *MyGame, screen *ebiten.Image) {
 
 	//fmt.Println("generatePlayerImage...")
 
 	screen.Fill(color.RGBA{113, 143, 191, 255})
 
-	A := pug.POS{X: 200, Y: 150}
-	B := pug.POS{X: 150, Y: 210}
-	C := pug.POS{X: 50, Y: 100}
-	D := pug.POS{X: 250, Y: 200}
+	A := pug.POS{X: 250, Y: g.rghtVal}
+	B := pug.POS{X: g.leftVal, Y: 260}
+	C := pug.POS{X: 100, Y: 150}
+	D := pug.POS{X: 300, Y: 250}
 
 	DrawLine(g, screen, A, B)
 	DrawLine(g, screen, C, D)
@@ -144,13 +143,20 @@ func (p *Player) DrawSimple(g *MyGame, screen *ebiten.Image) {
 	}
 	DrawDot(g, screen, N, "N", t < 0 || t > 1)
 
-	msg := fmt.Sprintf(`FPS: %0.2f, TPS: %0.2f
-Press A to switch anti-aliasing : %t.
-Press C to switch color to draw the strokes : %t
-Press Up/Down to adjust Speed : %f
-Lerp - Percentage: %0.2f`, ebiten.ActualFPS(), ebiten.ActualTPS(), g.aa, g.strokeLineFlag, g.addendum, t)
+	msg := fmt.Sprintf(
+		`FPS: %0.2f, TPS: %0.2f, [A]ntiAliasing: %t, [C]olor-Switch: %t, [MouseWheel] to Zoom: %d
+Press [Up]/[Down] to adjust Speed : %f
+Press [Left]/[Right] to move Points (Ay/Bx) : %.2f 
+Lerp - Percentage: %0.2f`,
+		ebiten.ActualFPS(), ebiten.ActualTPS(), g.aa, g.strokeLineFlag, g.zoom,
+		g.addendum, g.leftVal, t)
 	ebitenutil.DebugPrint(screen, msg)
-	intersec, offset := pug.GetIntersection(A,B,C,D)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%v (offset=%.2f)",intersec,offset), 111,111)
-	DrawDot(g, screen, *intersec, "I")
+	intersec, offset := pug.GetIntersection(A, B, C, D)
+
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%v (offset=%.2f)", intersec, offset), screen.Bounds().Dx(), screen.Bounds().Dy())
+
+	if intersec != nil {
+
+		DrawDot(g, screen, *intersec, "I")
+	}
 }
