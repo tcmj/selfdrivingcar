@@ -1,5 +1,5 @@
 # selfdrivingcar
-Go Project to learn Go and AI
+Go Project to learn Go and AI!
 
 
 # First impressions (after a few days)
