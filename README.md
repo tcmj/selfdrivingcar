@@ -14,7 +14,7 @@ Go Project to learn Go and AI
 ## on ebitengine
 - overal, after some researching i'm having fun with it! And i will use it furthermore!
 - but there are also strange feelings left behind:
-- namings are often kinda weird: 
+- namings are often kinda weird:
    - ebiten.Wheel() is used to get the MouseWheel data 
    - ebiten.CursorPosition gives the Mouse coordinates 
 - i think i would whish some more packages / organizations?  
