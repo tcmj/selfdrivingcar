@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
+    "fmt"
 )
 
 func main() {
-	fmt.Println("All your code is mine now!")
+    fmt.Println("All your code is mine now!")
 
 }
