@@ -26,7 +26,9 @@ var DATA_PINGUIN = []byte("" +
 func GetIconGopher() []image.Image {
     return GetIcon(DATA_GOPHER)
 }
-
+func GetIconPingu() []image.Image {
+    return GetIcon(DATA_PINGUIN)
+}
 func GetIcon(b []byte) []image.Image {
     m, _, err := image.Decode(bytes.NewReader(b))
     if err != nil {

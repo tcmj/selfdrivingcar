@@ -126,9 +126,6 @@ func (g *MyGameApp1) Draw(screen *ebiten.Image) {
 }
 
 func DrawSimple(g *MyGameApp1, screen *ebiten.Image) {
-
-    //fmt.Println("generatePlayerImage...")
-
     screen.Fill(color.RGBA{113, 143, 191, 255})
 
     A := pug.POS{X: 250, Y: g.rghtVal}
@@ -146,7 +143,7 @@ func DrawSimple(g *MyGameApp1, screen *ebiten.Image) {
     DrawDot(g, screen, D, "D")
 
     var t float64 = g.count
-
+    t = pug.Ease(t,pug.Spike)
     M := pug.POS{
         X: pug.Lerp(A.X, B.X, t),
         Y: pug.Lerp(A.Y, B.Y, t),
@@ -200,8 +197,8 @@ func DrawDot(g *MyGameApp1, screen *ebiten.Image, point pug.POS, label string, i
 
 func DrawLine(g *MyGameApp1, screen *ebiten.Image, pA pug.POS, pB pug.POS) {
     op := &vector.StrokeOptions{}
-    op.Width = 2
-    op.LineJoin = vector.LineJoinMiter
+    op.Width = 5
+    op.LineJoin = vector.LineJoinRound //LineJoinMiter, LineJoinBevel, 	LineJoinRound
     var path vector.Path
     path.MoveTo(float32(pA.X), float32(pA.Y))
     path.LineTo(float32(pB.X), float32(pB.Y))
